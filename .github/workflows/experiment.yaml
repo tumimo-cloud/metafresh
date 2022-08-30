@@ -1,0 +1,51 @@
+name: experiment
+on: [push]
+jobs:
+
+  init:
+    runs-on: ubuntu-latest
+    outputs:
+      tag-floating: ${{ steps.sanitize.outputs.refname }}
+      tag-fixed: ${{ steps.sanitize.outputs.refname }}.${{ github.run_number }}
+      build-info-properties: ${{ steps.build-info-properties.outputs.content }}
+      git-properties: ${{ steps.git-properties.outputs.content }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: sanitize-ref-name
+        id: sanitize
+        run: |
+          echo "::set-output name=refname::$(echo '${{ github.ref_name }}' | sed -r 's/([^a-zA-Z0-9.]+)/-/g' | sed -r 's/(^-|-$)//g')"          
+      - name: define-build-info-properties
+        id: build-info-properties
+        run: |
+          echo "::set-output name=content::build.name=github actions\nbuild.system=${{ runner.name }}\nbuild.time=$(date)\nbuild.user=${{ github.actor }}\nbuild.version=$(cat docker-builds/version.info)-${{ steps.sanitize.outputs.refname }}.${{ github.run_number }}\nbuild.number=${{ github.run_number }}"
+      - name: define-git-properties
+        id: git-properties
+        run: |
+          echo "::set-output name=content::git.remote.origin.url=${{ github.repositoryUrl }}\ngit.branch=${{ github.event.ref }}\ngit.commit.id=${{ github.event.head_commit.id }}\ngit.commit.message=${{ github.event.head_commit.message }}"
+      - name: print-vars
+        run: env
+      - name: print-info
+        run: |
+          echo -e "[sanitized refname]\n${{ steps.sanitize.outputs.refname }}\n"
+          echo -e "[build-info.properties]\n${{ steps.build-info-properties.outputs.content }}\n"
+          echo -e "[git-properties]\n${{ steps.git-properties.outputs.content }}\n"
+
+  redeploy:
+    runs-on: ubuntu-latest
+    needs: [init]
+    environment: 'dev'
+    steps:
+      - name: get-app-token
+        id: get_token
+        uses: machine-learning-apps/actions-app-token@master
+        with:
+          APP_ID: 233167
+          APP_PEM: ${{ secrets.MF15_KUBERNETES_DISPATCHER_PEM }}
+      - name: dispatching-redeploy
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ steps.get_token.outputs.app_token }}
+          repository: metasfresh/mf15-kubernetes
+          event-type: redeploy
+          client-payload: '{"tag": "${{ needs.init.outputs.tag-floating }}"}'
