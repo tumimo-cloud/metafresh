@@ -36,10 +36,14 @@ jobs:
       - name: print-vars
         run: env
       - name: print-info
+        env:
+          OUT_REFNAME: ${{ steps.sanitize.outputs.refname }}
+          OUT_BUILD_PROPS: ${{ steps.build-info-properties.outputs.content }}
+          OUT_GIT_PROPS: ${{ steps.git-properties.outputs.content }}
         run: |
-          echo -e "[sanitized refname]\n${{ steps.sanitize.outputs.refname }}\n"
-          echo -e "[build-info.properties]\n${{ steps.build-info-properties.outputs.content }}\n"
-          echo -e "[git-properties]\n${{ steps.git-properties.outputs.content }}\n"
+          echo -e "[sanitized refname]\n$OUT_REFNAME\n"
+          echo -e "[build-info.properties]\n$OUT_BUILD_PROPS\n"
+          echo -e "[git-properties]\n$OUT_GIT_PROPS\n"
 
   java:
     runs-on: ubuntu-latest
