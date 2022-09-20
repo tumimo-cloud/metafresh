@@ -172,9 +172,12 @@ jobs:
           username: metasfresh
           password: ${{ secrets.DOCKERHUB_METASFRESH_RW_TOKEN }}
       - name: prepare
+        env:
+          INIT_BUILD_PROPS: ${{ needs.init.outputs.build-info-properties }}
+          INIT_GIT_PROPS: ${{ needs.init.outputs.git-properties }}
         run: |
-          echo -e "${{ needs.init.outputs.build-info-properties }}" > docker-builds/metadata/build-info.properties
-          echo -e "${{ needs.init.outputs.git-properties }}" > docker-builds/metadata/git.properties
+          echo -e "$INIT_BUILD_PROPS" > docker-builds/metadata/build-info.properties
+          echo -e "$INIT_GIT_PROPS" > docker-builds/metadata/git.properties
       - name: build-api
         run: |
           docker buildx build \
