@@ -398,6 +398,7 @@ jobs:
           echo 'test results can be found at https://metasfresh.testspace.com/' >> $GITHUB_STEP_SUMMARY
 
   cucumber:
+    name: test (cucumber)
     runs-on: ubuntu-latest
     needs: [init, backend, frontend]
     steps:
