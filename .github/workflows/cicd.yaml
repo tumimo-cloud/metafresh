@@ -442,7 +442,7 @@ jobs:
         with:
           name: cucumber-logs
           path: cucumber.log
-       - name: produce-summary
+      - name: produce-summary
         run: |
           echo 'test results can be found at https://metasfresh.testspace.com/' >> $GITHUB_STEP_SUMMARY
 
